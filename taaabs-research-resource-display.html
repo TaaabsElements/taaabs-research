@@ -1,0 +1,107 @@
+<dom-module id="taaabs-research-resource-display">
+  <template>
+    <style include="taaabs-theme"></style>
+    <style>
+      :host {
+        display: block;
+        width: 100%;
+      }
+      :host #id-div{
+        line-height: 16px;
+        font-weight: bold;
+        padding-top: 5px;
+        padding-bottom: 5px;
+      }
+      :host #icon-div{
+        padding: 5px;
+        line-height: 16px;
+        border-radius: 5px;
+        color: white;
+      }
+      :host #label-div{
+        font-style: italic;
+        font-weight: normal;
+      }
+      :host .base-color{
+        background-color: var(--paper-deep-orange-500);
+      }
+      :host .stored-trace-color{
+        background-color: var(--paper-light-blue-500);
+      }
+      :host .computed-trace-color{
+        background-color: var(--paper-blue-500);
+      }
+      :host .trace-model-color{
+        background-color: var(--paper-amber-500);
+      }
+      :host .method-color{
+        background-color: var(--paper-purple-500);
+      }
+    </style>
+    <div class="flex-horizontal">
+      <div id="id-div" class="flexchild">
+        [[resource._id]]<br/>
+        <span id="label-div">[[resource._label]]</span>
+      </div>
+      <div>
+        <div id="icon-div">
+          [[resource._type]]
+        </div>
+      </div>
+    </div>
+    <div id="commment-div">
+      [[resource._comment]]
+    </div>
+  </template>
+  <script>
+    TaaabsResearchResourceDisplay = Polymer({
+      is: 'taaabs-research-resource-display',
+
+      properties: {
+        /**
+         * The resource.
+         *
+         * @attribute resource
+         * @type Object
+         */
+        resource: {
+         type: Object,
+         value: null,
+        }
+      },
+
+      factoryImpl: function(resource) {
+        if(resource['@graph']){
+          var g = resource['@graph'];
+          for(var e in g)
+            if(g[e]['@type'] === "TraceModel"){
+              var m = g[e];
+              var c = 'http://www.w3.org/2000/01/rdf-schema#comment';
+              resource = {
+                '@id': m['@id'],
+                '@type': m['@type'],
+                'label': m['label'],
+                c: m[c]
+              }
+            }
+
+        }
+        resource._id      = resource['@id'];
+        resource._label   = resource['label'];
+        resource._comment = resource['http://www.w3.org/2000/01/rdf-schema#comment'];
+        resource._type    = resource['@type'];
+        this.set('resource', resource);
+      },
+
+      attached: function(){
+        if(this.resource !== null){
+          if     (this.resource._type === 'Base')          this.$['icon-div'].classList.add('base-color');
+          else if(this.resource._type === 'StoredTrace')   this.$['icon-div'].classList.add('stored-trace-color');
+          else if(this.resource._type === 'ComputedTrace') this.$['icon-div'].classList.add('computed-trace-color');
+          else if(this.resource._type === 'TraceModel')    this.$['icon-div'].classList.add('trace-model-color');
+          else if(this.resource._type === 'Method')        this.$['icon-div'].classList.add('method-color');
+        }
+      }
+    });
+  </script>
+</dom-module>

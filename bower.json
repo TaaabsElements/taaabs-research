@@ -1,0 +1,33 @@
+{
+  "name": "taaabs-research",
+  "version": "0.1.0",
+  "description": "A graphical component that helps looking for resources in a ktbs.",
+  "keywords": [
+    "web-components",
+    "polymer",
+    "taaabs"
+  ],
+  "authors": [
+    "Rémi Casado"
+  ],
+  "repository": {
+   "type": "git",
+   "url": "https://github.com/TaaabsElements/taaabs-research.git"
+  },
+  "main": "taaabs-research.html",
+  "license": "https://github.com/TaaabsElements/taaabs-research/LICENSE",
+  "dependencies": {
+    "polymer": "polymer/polymer",
+    "app-localize-behavior": "PolymerElements/app-localize-behavior",
+    "paper-input": "PolymerElements/paper-input",
+    "iron-icon": "PolymerElements/iron-icon",
+    "iron-icons": "PolymerElements/iron-icons",
+    "iron-collapse": "PolymerElements/iron-collapse",
+    "taaabs-themes":"TaaabsElements/taaabs-themes"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#^1.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  },
+  "ignore": []
+}

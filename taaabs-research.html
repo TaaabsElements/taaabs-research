@@ -1,0 +1,318 @@
+<link rel="import" href="../taaabs-themes/taaabs-theme.html">
+<link rel="import" href="../app-localize-behavior/app-localize-behavior.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+
+<link rel="import" href="./taaabs-research-resource-display.html">
+<link rel="import" href="./taaabs-research-error-display.html">
+<dom-module id="taaabs-research">
+  <template>
+    <style include="taaabs-theme"></style>
+    <style>
+      :host {
+        display: block;
+        width: 100%;
+      }
+      :host #autocomplete-div{
+        max-height: 240px;
+      }
+      :host #autocomplete-div div{
+        height: 24px;
+        padding-top: 2px;
+        line-height: 20px;
+      }
+      :host #autocomplete-div div:nth-child(2n){
+        background-color: var(--paper-grey-100);
+      }
+      :host #autocomplete-div div:hover{
+        background-color: var(--paper-grey-200);
+      }
+    </style>
+    <div class="flex-vertical fit-width">
+      <div class="fit-width flex-horizontal">
+        <paper-input id="input" class="fit-width" value="{{resourceUrl}}" label="[[localize('input-label')]]" on-input="_onInputChange" on-blur="_onInputBlur" on-focus="_onInputFocus">
+          <iron-icon icon="icons:search" suffix></iron-icon>
+        </paper-input>
+      </div>
+      <iron-collapse id="autocomplete-collapse">
+        <div id="autocomplete-div" class="swag-scroll">
+          <template is="dom-repeat" items="[[_baseChildren]]" index-as="index">
+            <div class="hoverable clickable" on-click="_onAutocompleteClick">[[item]]</div>
+          </template>
+        </div>
+      </iron-collapse>
+      <div id="display-target" class="fit-width"></div>
+    </div>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'taaabs-research',
+
+      properties: {
+        /**
+         * The kTBS url.
+         *
+         * @attribute ktbsUrl
+         * @type String
+         */
+        ktbsUrl: {
+         type: String,
+         value: null
+        },
+
+        /**
+         * The resource.
+         *
+         * @attribute resource
+         * @type Object
+         */
+        resource: {
+         type: Object,
+         value: null
+        },
+
+        /**
+         * The resource url.
+         *
+         * @attribute resourceUrl
+         * @type String
+         */
+        resourceUrl: {
+         type: String,
+         value: null
+        },
+
+        /**
+         * i18n language. Must be 'fr' or 'en' atm.
+         *
+         * @attribute language
+         * @type String
+         */
+        language: {
+         type: String,
+         value: 'en'
+        },
+
+        /**
+         * List of the resource children when it's a base.
+         *
+         * @attribute _baseChildren
+         * @type Array
+         */
+        _baseChildren: {
+         type: Array,
+         value: function(){
+           return [];
+         }
+        }
+      },
+
+      behaviors: [
+        Polymer.AppLocalizeBehavior
+      ],
+
+      attached: function() {
+        // Load i18n json.
+        this.loadResources(this.resolveUrl('./languages/locales.json'));
+      },
+
+      /**
+       * If `s` is an absolute URL, returns `s`.
+       * Otherwise returns `ktbsUrl` + `s`.
+       *
+       * @param {!required} s {String} A string.
+       *
+       * @method _completeUrl
+       */
+      _completeUrl: function(s) {
+        if(s.search(/http[s]?:\/\//) !== -1) return s;
+        else return this.ktbsUrl+s;
+      },
+
+      /**
+       * Returns a promise of a GET request on the url.
+       *
+       * @param {!required} url {String} The url of the resource to get.
+       *
+       * @method _GETResource
+       */
+      _GETResource: function(url) {
+        return new Promise( function(resolve, reject){
+          const req = new XMLHttpRequest();
+          req.open('GET', url);
+          req.setRequestHeader('Content-Type', 'application/json');
+          req.withCredentials = true;
+
+          req.onreadystatechange = function(event) {
+            console.log(this);
+            if (this.readyState === XMLHttpRequest.DONE) {
+              if (this.status === 200 || this.status === 201 || this.status === 304) {
+                resolve(this.response)
+              }
+              else {
+                reject(req);
+              }
+            }
+          };
+          req.send(null);
+        });
+      },
+
+      /**
+       * TODO.
+       *
+       * @param {!required} resource {Object} The resource.
+       *
+       * @method _handleSuccess
+       */
+      _handleSuccess: function(resource){
+        this._displayResource(resource);
+        this.set('resource', resource);
+        if(resource['@type'] === "Base") this._handleBase();
+        else this.set('_baseChildren', []);
+      },
+
+      /**
+       * TODO.
+       *
+       * @param {!required} resource {Object} The resource.
+       *
+       * @method _displayResource
+       */
+      _displayResource: function(resource){
+        var dt = this.$['display-target'];
+        if(dt.children.length > 0) dt.removeChild(dt.firstChild);
+        var elem = new TaaabsResearchResourceDisplay(resource);
+        this.$['display-target'].appendChild(elem);
+      },
+
+      /**
+       * TODO.
+       *
+       * @method _handleBase
+       */
+      _handleBase: function() {
+        var r = this.get('resource');
+        if(r.contains.length > 0){
+          this.set('_baseChildren', []);
+          for(var e in r.contains)
+            this.push('_baseChildren', r.contains[e]['@id']);
+        }
+        this.$['autocomplete-collapse'].show();
+      },
+
+      /**
+       * TOOD.
+       *
+       * @param {!required} response {String} The GET request response.
+       *
+       * @method _handleError
+       */
+      _handleError: function(response) {
+        if(this._isAutocompleting()){
+          var r = this.get('resource');
+          var u = this._completeUrl(this.get('resourceUrl'));
+          // Remove the resource base.
+          var s = u.replace(r['@id'], '');
+          this.set('_baseChildren', []);
+          for(var e in r.contains)
+            if(r.contains[e]['@id'].search(s) !== -1)
+              this.push('_baseChildren', r.contains[e]['@id']);
+        }
+        else{
+          var displayElem = null;
+          if(response.status === 0 || response.status === 404){
+            var message = 'The resource '+this._completeUrl(this.resourceUrl)+' doesn\'t exist on the current kTBS.';
+            if(response.responseText !== "") message += 'More informations : '+response.responseText;
+            displayElem = new TaaabsResearchErrorDisplay(
+              'Resource not found',
+               message,
+              'Warning'
+            );
+          }
+          else if(response.status === 500){
+            displayElem = new TaaabsResearchErrorDisplay(
+              'Server error',
+              'The server encountered an error.'+
+              'More informations : '+response.responseText,
+              'Error'
+            );
+          }
+          var dt = this.$['display-target'];
+          if(dt.children.length > 0) dt.removeChild(dt.firstChild);
+          this.$['display-target'].appendChild(displayElem);
+        }
+      },
+
+      /**
+       * Returns true if the resource URL contains the url of the last resource retrieved.
+       * Returns false otherwise.
+       *
+       * @method _isAutocompleting
+       */
+      _isAutocompleting: function() {
+        var url = this._completeUrl(this.get('resourceUrl'));
+        return ( this.resource !== null && url.search(this.resource['@id']) !== -1 );
+      },
+
+      /**
+       * On the `paper-input` change.
+       *
+       * @param {!required} evt {String} The change event.
+       *
+       * @method _onInputChange
+       */
+      _onInputChange: function(evt) {
+        var url = this._completeUrl(this.get('resourceUrl'));
+        this._GETResource(url)
+            .then(function(response){
+              try {
+                response = JSON.parse(response);
+                this._handleSuccess(response);
+              } catch (e) {}
+            }.bind(this))
+            .catch( function(response){
+              this._handleError(response);
+            }.bind(this));
+      },
+
+      /**
+       * On the `paper-input` blur.
+       *
+       * @method _onInputBlur
+       */
+      _onInputBlur: function() {
+        this.$['autocomplete-collapse'].hide();
+      },
+
+      /**
+       * On the `paper-input` focus.
+       *
+       * @method _onInputFocus
+       */
+      _onInputFocus: function() {
+        if(this._baseChildren.length > 0)
+          this.$['autocomplete-collapse'].show();
+      },
+
+      /**
+       * On autocomplete elem click.
+       *
+       * @param {!required} evt {String} The click event.
+       *
+       * @method _onAutocompleteClick
+       */
+      _onAutocompleteClick: function(evt) {
+        var val = evt.model.item;
+        var r = this._completeUrl(this.get('resourceUrl'));
+        var base = r.replace(this.get('ktbsUrl'), '');
+        this.set('resourceUrl', base+val);
+        this._onInputChange();
+        this.$.input.focus();
+      }
+    });
+  </script>
+</dom-module>

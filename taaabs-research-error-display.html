@@ -1,0 +1,83 @@
+<dom-module id="taaabs-research-error-display">
+  <template>
+    <style include="taaabs-theme"></style>
+    <style>
+      :host {
+        display: block;
+        width: 100%;
+      }
+      :host .error-main-container{
+        background-color: var(--paper-red-100);
+        color: var(--paper-red-500);
+        border: solid 1px var(--paper-red-100);
+      }
+      :host .warning-main-container{
+        background-color: var(--paper-orange-100);
+        color: var(--paper-orange-500);
+        border: solid 1px var(--paper-orange-100);
+      }
+      :host p{
+        text-align: justify;
+      }
+    </style>
+    <div id="main-container">
+      <h4> [[errorTitle]] </h4>
+      <p> [[errorMessage]] </p>
+    </div>
+
+  </template>
+  <script>
+    TaaabsResearchErrorDisplay = Polymer({
+      is: 'taaabs-research-error-display',
+
+      properties: {
+        /**
+         * Error message title.
+         *
+         * @attribute errorTitle
+         * @type String
+         */
+        errorTitle: {
+         type: String,
+         value: null
+        },
+
+        /**
+         * Error message.
+         *
+         * @attribute errorMessage
+         * @type String
+         */
+        errorMessage: {
+         type: String,
+         value: null
+        },
+
+        /**
+         * Error type.
+         *
+         * @attribute errorType
+         * @type String
+         */
+        errorType: {
+         type: String,
+         value: 'Error'
+       }
+     },
+
+     factoryImpl: function(et, em, type) {
+       this.set('errorTile', et);
+       this.set('errorMessage', em);
+       this.set('errorType', type);
+     },
+
+     attached: function(){
+       if(this.errorType !== null){
+         if     (this.errorType === 'Error')   this.$['main-container'].classList.add('error-main-container');
+         else if(this.errorType === 'Warning') this.$['main-container'].classList.add('warning-main-container');
+       }
+     }
+
+    });
+  </script>
+</dom-module>
