@@ -307,7 +307,7 @@
        */
       _onAutocompleteClick: function(evt) {
         var val = evt.model.item;
-        var r = this._completeUrl(this.get('resourceUrl'));
+        var r = this.resource['@id'];
         var base = r.replace(this.get('ktbsUrl'), '');
         this.set('resourceUrl', base+val);
         this._onInputChange();
