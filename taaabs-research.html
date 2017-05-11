@@ -185,7 +185,7 @@
       _displayResource: function(resource){
         var dt = this.$['display-target'];
         if(dt.children.length > 0) dt.removeChild(dt.firstChild);
-        var elem = new TaaabsResearchResourceDisplay(resource);
+        var elem = new TAAABS.ResearchResourceDisplay(resource);
         this.$['display-target'].appendChild(elem);
       },
 
@@ -227,14 +227,14 @@
           if(response.status === 0 || response.status === 404){
             var message = 'The resource '+this._completeUrl(this.resourceUrl)+' doesn\'t exist on the current kTBS.';
             if(response.responseText !== "") message += 'More informations : '+response.responseText;
-            displayElem = new TaaabsResearchErrorDisplay(
+            displayElem = new TAAABS.ResearchErrorDisplay(
               'Resource not found',
                message,
               'Warning'
             );
           }
           else if(response.status === 500){
-            displayElem = new TaaabsResearchErrorDisplay(
+            displayElem = new TAAABS.ResearchErrorDisplay(
               'Server error',
               'The server encountered an error.'+
               'More informations : '+response.responseText,
